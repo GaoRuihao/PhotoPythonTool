@@ -15,12 +15,13 @@ class bcolors:
     ENDC = '\033[0m'
 
 def findHEIC_address_from_GPS(lat, lng):
-    secret_key = 'uGsotSPrAapKFokoaDoUGIZ27dDA1Ura'
+    secret_key = 'vtAG8bhmaCAyjdYIc1uoQKf64juqA018'
     baidu_map_api = "https://api.map.baidu.com/reverse_geocoding/v3/?ak={0}&output=json&coordtype=wgs84ll&location={1},{2}".format(
         secret_key, lat, lng)
     response = requests.get(baidu_map_api).json()
     status = response['status']
 
+    print(f"baidu api respose: {response}")
     formatted_addreses = response["result"]["formatted_address"]
     province = response["result"]["addressComponent"]["province"]
     city = response["result"]["addressComponent"]["city"]
@@ -42,11 +43,12 @@ def get_gps_info(file_path):
         return None
 
 def extract_gps_from_mov(directory):
-    for root, _, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory):
         for file_name in files:
             if file_name.endswith(".mov"):
                 file_path = os.path.join(root, file_name)
-                
+                print(f"file_path   {file_path}")
+
                 # 获取经纬度信息
                 gps_info = get_gps_info(file_path)
                 if gps_info:
@@ -68,12 +70,13 @@ def extract_gps_from_mov(directory):
                             if not os.path.exists(city_folder_path):
                                 os.makedirs(city_folder_path)
 
+                            os.chmod(city_folder_path, 0o777)
                             # 移动照片到对应城市文件夹下
                             shutil.move(file_path, os.path.join(city_folder_path, file_name))
                             print(f"{bcolors.OKGREEN}Moved {file_name} successfully.{bcolors.ENDC}")
 
 # 指定包含MOV视频的文件夹路径
-folder_path = "/Users/hao/Desktop/test"
+folder_path = "/Users/hao/Desktop/originals"
 output_folder_path = "/Users/hao/Desktop/mobile"
 
 # 提取文件夹及其子文件夹中所有MOV视频的经纬度信息

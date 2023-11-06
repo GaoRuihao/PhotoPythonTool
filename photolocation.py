@@ -10,7 +10,11 @@ import requests
 
 
 def latitude_and_longitude_convert_to_decimal_system(*arg):
-    return float(arg[0]) + ((float(arg[1]) + (float(arg[2].split('/')[0]) / float(arg[2].split('/')[-1]) / 60)) / 60)
+    try:
+        return float(arg[0]) + ((float(arg[1]) + (float(arg[2].split('/')[0]) / float(arg[2].split('/')[-1]) / 60)) / 60)
+    except ZeroDivisionError:
+        print("除以零错误。")
+        return None
 
 
 def find_GPS_image(pic_path):
@@ -46,7 +50,7 @@ def find_GPS_image(pic_path):
     return {'GPS_information': GPS, 'date_information': date}
 
 def findHEIC_address_from_GPS(lat, lng):
-    secret_key = 'uGsotSPrAapKFokoaDoUGIZ27dDA1Ura'
+    secret_key = 'vtAG8bhmaCAyjdYIc1uoQKf64juqA018'
     baidu_map_api = "https://api.map.baidu.com/reverse_geocoding/v3/?ak={0}&output=json&coordtype=wgs84ll&location={1},{2}".format(
         secret_key, lat, lng)
     response = requests.get(baidu_map_api).json()
@@ -71,10 +75,12 @@ def find_address_from_GPS(GPS):
     if not GPS['GPS_information']:
         print(f"该照片无GPS信息  {GPS}")
         return {"city": "未知GPS"}
-    lat, lng = GPS['GPS_information']['GPSLatitude'], GPS['GPS_information']['GPSLongitude']
-    print(f"经纬度 信息  {lat},  {lng}")
+    elif GPS['GPS_information']['GPSLatitude'] and GPS['GPS_information']['GPSLongitude']:
+        lat, lng = GPS['GPS_information']['GPSLatitude'], GPS['GPS_information']['GPSLongitude']
+        print(f"经纬度 信息  {lat},  {lng}")
+        return findHEIC_address_from_GPS(lat=lat, lng=lng)
+    return {"city": "未知GPS"}
     
-    return findHEIC_address_from_GPS(lat=lat, lng=lng)
 
 # ANSI颜色码
 class bcolors:
@@ -90,6 +96,8 @@ output_folder_path = "/Users/hao/Desktop/mobile"
 # 检查并创建输出文件夹
 if not os.path.exists(output_folder_path):
     os.makedirs(output_folder_path)
+
+os.chmod(output_folder_path, 0o777)
 
 # 初始化地理编码器
 geolocator = Nominatim(user_agent="geoapiExercises")
@@ -118,6 +126,8 @@ for root, dirs, files in os.walk(folder_path):
                             if not os.path.exists(city_folder_path):
                                 os.makedirs(city_folder_path)
 
+                            # 设置文件夹权限
+                            os.chmod(city_folder_path, 0o777)
                             # 移动照片到对应城市文件夹下
                             shutil.move(file_path, os.path.join(city_folder_path, file_name))
                             print(f"{bcolors.OKGREEN}Moved {file_name} successfully.{bcolors.ENDC}")
@@ -139,6 +149,7 @@ for root, dirs, files in os.walk(folder_path):
                         # 检查并创建城市文件夹
                         if not os.path.exists(city_folder_path):
                             os.makedirs(city_folder_path)
+                        os.chmod(city_folder_path, 0o777)
 
                         # 移动照片到对应城市文件夹下
                         shutil.move(file_path, os.path.join(city_folder_path, file_name))
